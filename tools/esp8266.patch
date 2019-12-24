@@ -1,0 +1,17 @@
+diff --git tools/Makefile tools/Makefile
+index 1a29eb1..e95e5e0 100644
+--- tools/Makefile
++++ tools/Makefile
+@@ -1,10 +1,10 @@
+ .DEFAULT_GOAL = all
+ 
+ BUILD_DIR ?= .
+-FROZEN_PATH ?= $(CURDIR)/../../../frozen
++FROZEN_PATH ?= $(CURDIR)/../../frozen
+ SPIFFS_SRC_PATH ?= $(CURDIR)/../src/spiffs
+ SPIFFS_INCLUDE_PATH ?= $(CURDIR)/../include/spiffs
+-SPIFFS_CONFIG_PATH ?=
++SPIFFS_CONFIG_PATH ?= $(CURDIR)/../include/esp8266
+ 
+ ifeq "$(SPIFFS_CONFIG_PATH)" ""
+ $(error Please set SPIFFS_CONFIG_PATH to where spiffs_config.h for the platform you are building for is located)
