@@ -135,6 +135,7 @@ def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
         logger.error('SPIFFS unpacking failed! Cannot unpack!' +
                      '\n\tCommand output:\n\t{}'.format(cmd.stdout) +
                      '\n\tError message:\n\t{}'.format(cmd.stderr))
+        exit(1)
     logger.debug('SPIFFS unpack success!' +
                  '\n\tCommand executed\n\t{}'.format(cmd.cmd) +
                  '\n\tCommand output\n\t{}'.format(cmd.stdout))
@@ -157,6 +158,7 @@ def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
         logger.error('SPIFFS repacking failed! Cannot create SPIFFS!' +
                      '\n\tCommand output:\n\t{}'.format(cmd.stdout) +
                      '\n\tError message:\n\t{}'.format(cmd.stderr))
+        exit(1)
     logger.debug('SPIFFS repack success!' +
                  '\n\tCommand executed\n\t{}'.format(cmd.cmd) +
                  '\n\tCommand output\n\t{}'.format(cmd.stdout))
