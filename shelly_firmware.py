@@ -175,9 +175,8 @@ def mk_hwinfo_for_platform(name):
      "hwinfo_ver": 1,
      "batch_id": 1,
      "model": name,
-     # Couldn't find original hw_revision. Arbitrary value.
-     "hw_revision": "prod-190101",
-     "manufacturer": "Allterco"
+     "hw_revision": "prod-unknown",
+     "manufacturer": "device_recovery"
     }
     return json.dumps(hwinfo)
 
