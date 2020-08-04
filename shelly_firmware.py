@@ -248,7 +248,7 @@ def main():
     parser.add_argument("-d", "--download", dest="model",
                         help="Download binary for specified device")
     parser.add_argument("-i", "--input", dest="input_file",
-                        help="Input .zip file")
+                        help="Use the provided .zip file as input, instead of downloading.")
     parser.add_argument("-o", "--output", default="firmware.bin",
                         help="Output file name")
     parser.add_argument("-v", "--verbose", action="store_true",

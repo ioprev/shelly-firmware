@@ -71,14 +71,19 @@ unspiffs8
 For running the script, please consult the output of `./shelly_firmware.py -h` command
 
 ```
-$ ./shelly_firmware.py -h
-usage: shelly_firmware.py [-h] [-l] [-d MODEL] [-o OUTPUT] [-v]
+$ ./shelly_firmware.py
+INFO:	Shelly firmware binary download tool. Version 0.1
+usage: shelly_firmware.py [-h] [-l] [-d MODEL] [-i INPUT_FILE] [-o OUTPUT]
+                          [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
   -l, --list            List available devices from shelly.cloud
   -d MODEL, --download MODEL
                         Download binary for specified device
+  -i INPUT_FILE, --input INPUT_FILE
+                        Use the provided .zip file as input, instead of
+                        downloading.
   -o OUTPUT, --output OUTPUT
                         Output file name
   -v, --verbose         Enable debug output to console
