@@ -53,13 +53,8 @@ def get_firmware_url(data, model):
     logger.debug("Model {} found!".format(model))
     return dev_info["url"]
 
-
-def download_firmware(url, output_file):
-    try:
-        fw_pkg = requests.get(url)
-    except Exception as err:
-        logger.exception("An error occurred while fetching firmware:" % err)
-    fw_zip = zipfile.ZipFile(io.BytesIO(fw_pkg.content))
+def build_firmware(input_data, output_file):
+    fw_zip = zipfile.ZipFile(io.BytesIO(input_data))
     manifest = fw_get_manifest(fw_zip)
     try:
         platform_name = manifest['name']
@@ -114,6 +109,19 @@ def download_firmware(url, output_file):
         logger.info('Writing file {}'.format(output_file))
         outfile.write(flash_image.getbuffer())
 
+def download_and_build_firmware(url, output_file):
+    try:
+        fw_pkg = requests.get(url)
+    except Exception as err:
+        logger.exception("An error occurred while fetching firmware:" % err)
+    build_firmware(fw_pkg.content, output_file)
+
+def build_firmware_from_file(input_file, output_file):
+    try:
+        file_contents=open(input_file,"rb").read()
+    except Exception as err:
+        logger.exception("An error occurred while reading input:" % err)
+    build_firmware(file_contents, output_file)
 
 def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
     # This will edit SPIFFS filesystem and inject hwinfo
@@ -239,6 +247,8 @@ def main():
                         help="List available devices from shelly.cloud")
     parser.add_argument("-d", "--download", dest="model",
                         help="Download binary for specified device")
+    parser.add_argument("-i", "--input", dest="input_file",
+                        help="Input .zip file")
     parser.add_argument("-o", "--output", default="firmware.bin",
                         help="Output file name")
     parser.add_argument("-v", "--verbose", action="store_true",
@@ -271,7 +281,10 @@ def main():
         logger.info('Output file is set to: {}'.format(args.output))
         dev_list = list_dev_from_cloud()
         firmware_url = get_firmware_url(dev_list, args.model)
-        download_firmware(firmware_url, args.output)
+        download_and_build_firmware(firmware_url, args.output)
+        exit(0)
+    if args.input_file:
+        build_firmware_from_file(args.input_file, args.output)
         exit(0)
     parser.print_help()
 
