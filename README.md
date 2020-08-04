@@ -22,6 +22,9 @@ $ pip3 install -r requirements.txt
 Installing collected packages: requests, sh
 Successfully installed requests-2.22.0 sh-1.12.14
 ```
+<p align="center">
+~ OR ~
+</p>
 
 b) Create a Python virtualenv by using `pipenv`. `pipenv` can be installed by [following the instructions](https://github.com/pypa/pipenv#installation)
 
