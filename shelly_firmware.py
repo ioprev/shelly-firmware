@@ -35,13 +35,17 @@ def list_dev_from_cloud():
         return cloud_json['data']
 
 
-def print_devices(data):
+def print_devices(data, beta):
     print('#'*56)
     print("The following devices were found in Shelly cloud\n")
     print("{0:<16}{1:<40}".format("Model", "Release"))
     print('='*56)
     for model, info in data.items():
-        print("{0:<16}{1:<40}".format(model, info["version"]))
+        try:
+            if beta: print("{0:<16}{1:<40}".format(model, info["beta_ver"]))
+            else: print("{0:<16}{1:<40}".format(model, info["version"]))
+        except KeyError:
+            logger.debug("No firmware verion available for model {}".format(model))
     print('#' * 56)
 
 
@@ -245,6 +249,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--list", action="store_true",
                         help="List available devices from shelly.cloud")
+    parser.add_argument("-b", "--beta", action="store_true",
+                        help="List beta versions from shelly.cloud")
     parser.add_argument("-d", "--download", dest="model",
                         help="Download binary for specified device")
     parser.add_argument("-i", "--input", dest="input_file",
@@ -274,7 +280,7 @@ def main():
     if args.list:
         logger.info('Getting list of available firmware packages from shelly.cloud')
         dev_list = list_dev_from_cloud()
-        print_devices(dev_list)
+        print_devices(dev_list, args.beta)
         exit(0)
     if args.model:
         logger.info('Downloading firmware binary file for device {}'.format(args.model))
