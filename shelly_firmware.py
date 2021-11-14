@@ -2,6 +2,7 @@
 import io
 import sh
 import os
+import re
 import sys
 import json
 import tempfile
@@ -86,14 +87,8 @@ def build_firmware(input_data, output_file):
                      '\tSize: {}\n'.format(hex(int(part_size))) +
                      '\tData: {}...'.format(''.join(format(x, '02x') for x in part_data[:32])))
         if 'fs' in key:
-            fs_params = {
-                'block_size': part['fs_block_size'],
-                'page_size': part['fs_page_size'],
-                'total_size': part['fs_size'],
-                'erase_size': part['fs_erase_size']
-            }
             logger.debug('Found SPIFFS data partition of size: {}'.format(part_size))
-            part_data = fs_inject_hwinfo(part_data, platform_name, **fs_params)
+            part_data = fs_inject_hwinfo(part_data, platform_name)
             part_size = len(part_data)
             logger.debug('New SPIFFS data partition size: {}'.format(part_size))
 
@@ -127,7 +122,7 @@ def build_firmware_from_file(input_file, output_file):
         logger.exception("An error occurred while reading input:" % err)
     build_firmware(file_contents, output_file)
 
-def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
+def fs_inject_hwinfo(data, name):
     # This will edit SPIFFS filesystem and inject hwinfo
     temp_dir = tempfile.mkdtemp()
     fs_dir = os.path.join(temp_dir, 'out')
@@ -152,6 +147,18 @@ def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
                  '\n\tCommand executed\n\t{}'.format(cmd.cmd) +
                  '\n\tCommand output\n\t{}'.format(cmd.stdout))
 
+    # unspiffs tool prints fs info in stderr during unpack
+    cmd_info = cmd.stderr.decode(sys.stderr.encoding)
+
+    # File size
+    fs_fs = re.search(r'\(.*fs\s(\d+).*\)', cmd_info).group(1)
+    # Block size
+    fs_bs = re.search(r'\(.*bs\s(\d+).*\)', cmd_info).group(1)
+    # Page size
+    fs_ps = re.search(r'\(.*ps\s(\d+).*\)', cmd_info).group(1)
+    # Erase size
+    fs_es = re.search(r'\(.*es\s(\d+).*\)', cmd_info).group(1)
+
     hwinfo = mk_hwinfo_for_platform(name)
     logger.debug('Created hwinfo struct:' +
                  '\n\t{}'.format(hwinfo))
@@ -160,10 +167,10 @@ def fs_inject_hwinfo(data, name, block_size, page_size, total_size, erase_size):
         f.flush()
 
     # Repack SPIFFS
-    cmd = tool_mkspiffs('-s', total_size,
-                  '-b', block_size,
-                  '-p', page_size,
-                  '-e', erase_size,
+    cmd = tool_mkspiffs('-s', fs_fs,
+                  '-b', fs_bs,
+                  '-p', fs_ps,
+                  '-e', fs_es,
                   '-f', fs_new,
                   fs_dir)
     if cmd.exit_code:
