@@ -46,8 +46,8 @@ $ pipenv shell
 ### Installing SPIFFS tools
 
 In addition to any Python dependencies, tools for editing the SPIFFS filesystem are required to be under the `tools` directory.
+A script named `build_tools.sh` will fetch and build the tools from the [Mongoose OS vfs-fs-spiffs](https://github.com/mongoose-os-libs/vfs-fs-spiffs) repository.
 
-A script named `build_tools.sh` will fetch and build the tools from the [Mongoose OS vfs-fs-spiffs](https://github.com/mongoose-os-libs/vfs-fs-spiffs) repository
 For the build to be successful `make` tool and a working C compiler are required to be installed on the system. 
 
 ```

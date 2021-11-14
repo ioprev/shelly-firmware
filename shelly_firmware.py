@@ -140,12 +140,12 @@ def fs_inject_hwinfo(data, name):
                         fs_old)
     if cmd.exit_code:
         logger.error('SPIFFS unpacking failed! Cannot unpack!' +
-                     '\n\tCommand output:\n\t{}'.format(cmd.stdout) +
-                     '\n\tError message:\n\t{}'.format(cmd.stderr))
+                     '\n\tCommand output:\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
+                     '\n\tError message:\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
         exit(1)
     logger.debug('SPIFFS unpack success!' +
-                 '\n\tCommand executed\n\t{}'.format(cmd.cmd) +
-                 '\n\tCommand output\n\t{}'.format(cmd.stdout))
+                 '\n\tCommand output\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
+                 '\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
 
     # unspiffs tool prints fs info in stderr during unpack
     cmd_info = cmd.stderr.decode(sys.stderr.encoding)
@@ -175,12 +175,12 @@ def fs_inject_hwinfo(data, name):
                   fs_dir)
     if cmd.exit_code:
         logger.error('SPIFFS repacking failed! Cannot create SPIFFS!' +
-                     '\n\tCommand output:\n\t{}'.format(cmd.stdout) +
-                     '\n\tError message:\n\t{}'.format(cmd.stderr))
+                     '\n\tCommand output:\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
+                     '\n\tError message:\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
         exit(1)
     logger.debug('SPIFFS repack success!' +
-                 '\n\tCommand executed\n\t{}'.format(cmd.cmd) +
-                 '\n\tCommand output\n\t{}'.format(cmd.stdout))
+                 '\n\tCommand output\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
+                 '\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
 
     with open(fs_new, 'rb') as f:
         new_data = bytearray(f.read())
