@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
+
 import io
-import sh
+import pysh
 import os
 import re
-import sys
 import json
 import tempfile
 import hashlib
@@ -19,8 +19,8 @@ flash_size = 2097152
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-tool_mkspiffs = sh.Command('./tools/mkspiffs8')
-tool_unspiffs = sh.Command('./tools/unspiffs8')
+tool_mkspiffs = lambda a: pysh.sh(f"./tools/mkspiffs8 {a}", capture=True)
+tool_unspiffs = lambda a: pysh.sh(f"./tools/unspiffs8 {a}", capture=True)
 
 
 def list_dev_from_cloud():
@@ -136,28 +136,27 @@ def fs_inject_hwinfo(data, name):
         f.flush()
 
     # Unpack SPIFFS
-    cmd = tool_unspiffs('-d', fs_dir,
-                        fs_old)
-    if cmd.exit_code:
+    cmd = tool_unspiffs(f"-d {fs_dir} {fs_old}")
+
+    if cmd.returncode:
         logger.error('SPIFFS unpacking failed! Cannot unpack!' +
-                     '\n\tCommand output:\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
-                     '\n\tError message:\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
+                     f'\n\tCommand output:\n\t{cmd.stdout}' +
+                     f'\n\tError message:\n\t{cmd.stderr}')
         exit(1)
     logger.debug('SPIFFS unpack success!' +
-                 '\n\tCommand output\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
-                 '\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
+                 f'\n\tCommand output\n\t{cmd.stdout}' +
+                 f'\n\t{cmd.stderr}')
 
     # unspiffs tool prints fs info in stderr during unpack
-    cmd_info = cmd.stderr.decode(sys.stderr.encoding)
 
     # File size
-    fs_fs = re.search(r'\(.*fs\s(\d+).*\)', cmd_info).group(1)
+    fs_fs = re.search(r'\(.*fs\s(\d+).*\)', cmd.stderr).group(1)
     # Block size
-    fs_bs = re.search(r'\(.*bs\s(\d+).*\)', cmd_info).group(1)
+    fs_bs = re.search(r'\(.*bs\s(\d+).*\)', cmd.stderr).group(1)
     # Page size
-    fs_ps = re.search(r'\(.*ps\s(\d+).*\)', cmd_info).group(1)
+    fs_ps = re.search(r'\(.*ps\s(\d+).*\)', cmd.stderr).group(1)
     # Erase size
-    fs_es = re.search(r'\(.*es\s(\d+).*\)', cmd_info).group(1)
+    fs_es = re.search(r'\(.*es\s(\d+).*\)', cmd.stderr).group(1)
 
     hwinfo = mk_hwinfo_for_platform(name)
     logger.debug('Created hwinfo struct:' +
@@ -167,16 +166,13 @@ def fs_inject_hwinfo(data, name):
         f.flush()
 
     # Repack SPIFFS
-    cmd = tool_mkspiffs('-s', fs_fs,
-                  '-b', fs_bs,
-                  '-p', fs_ps,
-                  '-e', fs_es,
-                  '-f', fs_new,
-                  fs_dir)
-    if cmd.exit_code:
-        logger.error('SPIFFS repacking failed! Cannot create SPIFFS!' +
-                     '\n\tCommand output:\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
-                     '\n\tError message:\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
+    cmd = tool_mkspiffs(
+        f"-s {fs_fs} -b {fs_bs} -p {fs_ps} -e {fs_es} -f {fs_new} {fs_dir}")
+
+    if cmd.returncode:
+        logger.error('SPIFFS repacking failed! Cannot create SPIFFS!'
+                     f'\n\tCommand output:\n\t{cmd.stdout}' +
+                     f'\n\tError message:\n\t{cmd.stderr}')
         exit(1)
     logger.debug('SPIFFS repack success!' +
                  '\n\tCommand output\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
