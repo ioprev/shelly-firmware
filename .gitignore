@@ -1,0 +1,6 @@
+.idea/
+
+tools/*spiffs8
+
+*.log
+*.bin

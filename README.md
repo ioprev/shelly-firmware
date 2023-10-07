@@ -7,40 +7,19 @@ The produced image can be used to revert a Shelly device to the official firmwar
 ## Getting Started
 
 To obtain the script, please make sure that you have `git` installed on your system, then download this git repository by running:
-`git clone https://github.com/ioprev/shelly-firmware.git`
+```bash
+git clone https://github.com/ioprev/shelly-firmware.git
+```
 
 ### Prerequisites
 
 Python 3.7+ is suggested for running the script. The Python dependencies for this script can be installed on your system by following either of these methods:
 
-a) Install system-wide by using pip
+Install via [poetry](https://python-poetry.org/docs/#installation): 
 
 ```
-$ cd shelly-firmware
-$ pip3 install -r requirements.txt
-...
-Installing collected packages: requests, sh
-Successfully installed requests-2.22.0 sh-1.12.14
-```
-<p align="center">
-~ OR ~
-</p>
-
-b) Create a Python virtualenv by using `pipenv`. `pipenv` can be installed by [following the instructions](https://github.com/pypa/pipenv#installation)
-
-```
-$ cd shelly-firmware
-$ pipenv install
-...
-✔ Success!
-Updated Pipfile.lock (417959)!
-Installing dependencies from Pipfile.lock (417959)…
-  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 6/6 — 00:00:02
-
-$ pipenv shell
-...
-(shelly-firmware) bash-3.2$
-
+cd shelly-firmware
+poetry install
 ```
  
 ### Installing SPIFFS tools
@@ -66,7 +45,6 @@ GCC unspiffs8
 The following binaries should now exist under `tools` directory:
 
 ```
-$ ls -1 unspiffs8 mkspiffs8
 mkspiffs8
 unspiffs8
 ```
