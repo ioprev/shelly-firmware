@@ -25,11 +25,11 @@ tool_unspiffs = lambda a: pysh.sh(f"./tools/unspiffs8 {a}", capture=True)
 
 def list_dev_from_cloud():
     try:
-        logger.debug("Fetching data from URL: {}".format(cloud_url))
+        logger.debug(f"Fetching data from URL: {cloud_url}")
         cloud_resp = requests.get(cloud_url)
     except Exception as err:
         logger.exception('An error occurred while fetching device list:' % err)
-    logger.debug('Got response {} for URL: {}'.format(cloud_resp.status_code, cloud_url))
+    logger.debug(f'Got response {cloud_resp.status_code} for URL: {cloud_url}')
     cloud_json = cloud_resp.json()
     if 'isok' in cloud_json and cloud_json['isok']:
         logger.debug('Data JSON received and it looks sane. isok = True')
@@ -37,16 +37,18 @@ def list_dev_from_cloud():
 
 
 def print_devices(data, beta):
-    print('#'*56)
+    print('#' * 56)
     print("The following devices were found in Shelly cloud\n")
     print("{0:<16}{1:<40}".format("Model", "Release"))
-    print('='*56)
+    print('=' * 56)
     for model, info in data.items():
         try:
-            if beta: print("{0:<16}{1:<40}".format(model, info["beta_ver"]))
-            else: print("{0:<16}{1:<40}".format(model, info["version"]))
+            if beta:
+                print("{0:<16}{1:<40}".format(model, info["beta_ver"]))
+            else:
+                print("{0:<16}{1:<40}".format(model, info["version"]))
         except KeyError:
-            logger.debug("No firmware verion available for model {}".format(model))
+            logger.debug(f"No firmware version available for model {model}")
     print('#' * 56)
 
 
@@ -54,9 +56,10 @@ def get_firmware_url(data, model):
     try:
         dev_info = data[model]
     except KeyError:
-        logger.exception("Model {} not found in Shelly cloud".format(model))
-    logger.debug("Model {} found!".format(model))
+        logger.exception(f"Model {model} not found in Shelly cloud")
+    logger.debug(f"Model {model} found!")
     return dev_info["url"]
+
 
 def build_firmware(input_data, output_file):
     fw_zip = zipfile.ZipFile(io.BytesIO(input_data))
@@ -65,14 +68,14 @@ def build_firmware(input_data, output_file):
         platform_name = manifest['name']
     except KeyError:
         logger.exception("Platform name not found in firmware package")
-    logger.info("Found platform {} in firmware package".format(platform_name))
+    logger.info(f"Found platform {platform_name} in firmware package")
     part_list = []
     logger.debug('Iterating over firmware parts...')
     for key, part in manifest['parts'].items():
         start_addr = part["addr"]
         part_size = part["size"]
-        if not any([x in part.keys() for x in ("fill","src")]):
-            logger.error('Data missing for part {}.'.format(key))
+        if not any([x in part.keys() for x in ("fill", "src")]):
+            logger.error(f'Data missing for part {key}.')
             exit(1)
         if "fill" in part:
             part_data = bytearray([part["fill"]] * part_size)
@@ -80,17 +83,18 @@ def build_firmware(input_data, output_file):
             part_data = fw_get_part(fw_zip, part["src"])
         if "cs_sha1" in part:
             if not fw_verify_part(part_data, part["cs_sha1"]):
-                logger.error("Verification failed. Invalid data for part {}".format(key))
+                logger.error(
+                    f"Verification failed. Invalid data for part {key}")
                 exit(1)
-        logger.debug('Found part {}:\n'.format(key) +
-                     '\tStart address: {}\n'.format(hex(int(start_addr))) +
-                     '\tSize: {}\n'.format(hex(int(part_size))) +
-                     '\tData: {}...'.format(''.join(format(x, '02x') for x in part_data[:32])))
+        logger.debug(f'Found part {key}:\n' +
+                     f'\tStart address: {hex(int(start_addr))}\n' +
+                     f'\tSize: {hex(int(part_size))}\n' +
+                     f'\tData: {"".join(format(x, "02x") for x in part_data[:32])}...')
         if 'fs' in key:
-            logger.debug('Found SPIFFS data partition of size: {}'.format(part_size))
+            logger.debug(f'Found SPIFFS data partition of size: {part_size}')
             part_data = fs_inject_hwinfo(part_data, platform_name)
             part_size = len(part_data)
-            logger.debug('New SPIFFS data partition size: {}'.format(part_size))
+            logger.debug(f'New SPIFFS data partition size: {part_size}')
 
         part_list.append({
             'start': start_addr,
@@ -100,13 +104,14 @@ def build_firmware(input_data, output_file):
     empty_image = create_flash_image(flash_size)
     flash_image = io.BytesIO(empty_image)
     for part in part_list:
-        logger.debug('Writing {} bytes at address {}...'.format(part['size'],
-                                                                hex(int(part['start']))))
+        logger.debug(
+            f'Writing {part["size"]} bytes at address {hex(int(part["start"]))}...')
         flash_image.seek(part['start'])
         flash_image.write(part['data'])
     with open(output_file, "wb") as outfile:
-        logger.info('Writing file {}'.format(output_file))
+        logger.info(f'Writing file {output_file}')
         outfile.write(flash_image.getbuffer())
+
 
 def download_and_build_firmware(url, output_file):
     try:
@@ -115,12 +120,14 @@ def download_and_build_firmware(url, output_file):
         logger.exception("An error occurred while fetching firmware:" % err)
     build_firmware(fw_pkg.content, output_file)
 
+
 def build_firmware_from_file(input_file, output_file):
     try:
-        file_contents=open(input_file,"rb").read()
+        file_contents = open(input_file, "rb").read()
     except Exception as err:
         logger.exception("An error occurred while reading input:" % err)
     build_firmware(file_contents, output_file)
+
 
 def fs_inject_hwinfo(data, name):
     # This will edit SPIFFS filesystem and inject hwinfo
@@ -129,7 +136,8 @@ def fs_inject_hwinfo(data, name):
     fs_old = os.path.join(temp_dir, 'old.bin')
     fs_new = os.path.join(temp_dir, 'new.bin')
     os.mkdir(fs_dir)
-    logger.debug('Created temporary directory {} for unpacking SPIFFS data'.format(fs_dir))
+    logger.debug(f'Created temporary directory {fs_dir} for unpacking SPIFFS '
+                 f'data')
 
     with open(fs_old, 'wb') as f:
         f.write(data)
@@ -159,8 +167,7 @@ def fs_inject_hwinfo(data, name):
     fs_es = re.search(r'\(.*es\s(\d+).*\)', cmd.stderr).group(1)
 
     hwinfo = mk_hwinfo_for_platform(name)
-    logger.debug('Created hwinfo struct:' +
-                 '\n\t{}'.format(hwinfo))
+    logger.debug(f'Created hwinfo struct:\n\t{hwinfo}')
     with open(os.path.join(fs_dir, 'hwinfo_struct.json'), 'w') as f:
         f.write(hwinfo)
         f.flush()
@@ -175,8 +182,8 @@ def fs_inject_hwinfo(data, name):
                      f'\n\tError message:\n\t{cmd.stderr}')
         exit(1)
     logger.debug('SPIFFS repack success!' +
-                 '\n\tCommand output\n\t{}'.format(cmd.stdout.decode(sys.stdout.encoding)) +
-                 '\n\t{}'.format(cmd.stderr.decode(sys.stderr.encoding)))
+                 f'\n\tCommand output\n\t{cmd.stdout}' +
+                 f'\n\t{cmd.stderr}')
 
     with open(fs_new, 'rb') as f:
         new_data = bytearray(f.read())
@@ -186,22 +193,23 @@ def fs_inject_hwinfo(data, name):
 
 def mk_hwinfo_for_platform(name):
     hwinfo = {
-     "selftest": True,
-     "hwinfo_ver": 1,
-     "batch_id": 1,
-     "model": name,
-     "hw_revision": "prod-unknown",
-     "manufacturer": "device_recovery"
+        "selftest": True,
+        "hwinfo_ver": 1,
+        "batch_id": 1,
+        "model": name,
+        "hw_revision": "prod-unknown",
+        "manufacturer": "device_recovery"
     }
     return json.dumps(hwinfo)
 
 
 def fw_get_manifest(fw_zip):
     firmware_files = fw_zip.namelist()
-    logger.debug('The following files were found in downloaded firmware package'
-                 '\n\t{}'.format('\n\t'.join(firmware_files)))
+    logger.debug(
+        'The following files were found in downloaded firmware package'
+        '\n\t{}'.format('\n\t'.join(firmware_files)))
     manifest_name = next(file for file in firmware_files if "manifest" in file)
-    logger.debug('The manifest seems to be named {}'.format(manifest_name))
+    logger.debug(f'The manifest seems to be named {manifest_name}')
     if not manifest_name:
         logger.error("Manifest file was not found in firmware package!")
         exit(1)
@@ -214,16 +222,17 @@ def fw_get_manifest(fw_zip):
 
 
 def fw_get_part(fw_zip, part):
-    logger.debug('Searching for part {} in firmware package'.format(part))
+    logger.debug(f'Searching for part {part} in firmware package')
     firmware_files = fw_zip.namelist()
-    logger.debug('The following files were found in downloaded firmware package'
-                 '\n\t{}'.format('\n\t'.join(firmware_files)))
+    logger.debug(
+        'The following files were found in downloaded firmware package'
+        '\n\t{}'.format('\n\t'.join(firmware_files)))
     part_name = next(file for file in firmware_files if part in file)
-    logger.debug('The file for part {} seems to be named {}'.format(part, part_name))
+    logger.debug(f'The file for part {part} seems to be named {part_name}')
     if part_name:
         part_data = bytearray(fw_zip.read(part_name))
     else:
-        logger.error("Error occurred trying to read data for part {}".format(part))
+        logger.error(f"Error occurred trying to read data for part {part}")
         exit(1)
     return part_data
 
@@ -234,8 +243,8 @@ def fw_verify_part(data, chksum):
     algo.update(data)
     digest = algo.hexdigest()
     logger.debug('The following checksums were calculated:\n' +
-                 '\tData\t\t{}\n'.format(digest) +
-                 '\tManifest\t{}'.format(chksum))
+                 f'\tData\t\t{digest}\n' +
+                 f'\tManifest\t{chksum}')
     if chksum == digest:
         logger.debug('Checksums match. Success!')
         return True
@@ -243,7 +252,7 @@ def fw_verify_part(data, chksum):
 
 
 def create_flash_image(size):
-    logger.debug('Generating empty flash image of {} bytes'.format(size))
+    logger.debug(f'Generating empty flash image of {size} bytes')
     return bytearray([255] * size)
 
 
@@ -275,19 +284,22 @@ def main():
     logger.addHandler(console_handler)
     file_handler = logging.FileHandler('shelly_firmware.log')
     file_handler.setLevel(logging.DEBUG)
-    file_format = logging.Formatter('%(asctime)s\t[%(levelname)s]: %(message)s')
+    file_format = logging.Formatter(
+        '%(asctime)s\t[%(levelname)s]: %(message)s')
     file_handler.setFormatter(file_format)
     logger.addHandler(file_handler)
 
-    logger.info('Shelly firmware binary download tool. Version {}'.format(VERSION))
+    logger.info(f'Shelly firmware binary download tool. Version {VERSION}')
     if args.list:
-        logger.info('Getting list of available firmware packages from shelly.cloud')
+        logger.info(
+            'Getting list of available firmware packages from shelly.cloud')
         dev_list = list_dev_from_cloud()
         print_devices(dev_list, args.beta)
         exit(0)
     if args.model:
-        logger.info('Downloading firmware binary file for device {}'.format(args.model))
-        logger.info('Output file is set to: {}'.format(args.output))
+        logger.info(
+            f'Downloading firmware binary file for device {args.model}')
+        logger.info(f'Output file is set to: {args.output}')
         dev_list = list_dev_from_cloud()
         firmware_url = get_firmware_url(dev_list, args.model)
         download_and_build_firmware(firmware_url, args.output)
