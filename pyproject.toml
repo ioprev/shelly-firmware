@@ -9,7 +9,6 @@ packages = [{include = "shelly_firmware"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.22.0"
-sh = "^2.0.6"
 pysh = "^3.3.1"
 
 
